@@ -1,0 +1,140 @@
+Sub StockAnalysisForAllYears()
+    Dim ws As Worksheet
+    For Each ws In ThisWorkbook.Worksheets
+        Call StockAnalysis(ws)
+    Next ws
+End Sub
+
+Sub StockAnalysis(ws As Worksheet)
+    ' Declare variables
+    Dim lastRow As Long
+    Dim tickerSymbol As String
+    Dim openingPrice As Double
+    Dim closingPrice As Double
+    Dim yearlyChange As Double
+    Dim percentageChange As Double
+    Dim totalVolume As Double
+    Dim summaryRow As Long
+    Dim greatestIncreaseTicker As String
+    Dim greatestDecreaseTicker As String
+    Dim greatestVolumeTicker As String
+    Dim greatestIncrease As Double
+    Dim greatestDecrease As Double
+    Dim greatestVolume As Double
+    Dim isFirstStock As Boolean
+    
+    ' Find the last row of data in column A
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    
+    ' Initialize summary table headers
+    ws.Cells(1, 9).Value = "Ticker Symbol"
+    ws.Cells(1, 10).Value = "Yearly Change"
+    ws.Cells(1, 11).Value = "Percentage Change"
+    ws.Cells(1, 12).Value = "Total Stock Volume"
+    
+    ' Initialize summary table row counter
+    summaryRow = 2
+    
+    ' Initialize variables for greatest increase, decrease, and volume
+    greatestIncrease = 0
+    greatestDecrease = 0
+    greatestVolume = 0
+    isFirstStock = True
+    
+    ' Loop through each row of data
+    For i = 2 To lastRow
+        ' Check if it's the first occurrence of a ticker symbol
+        If ws.Cells(i, 1).Value <> ws.Cells(i - 1, 1).Value Then
+            ' If not the first stock, then output the results for the previous stock
+            If Not isFirstStock Then
+                ' Output the results to the summary table
+                ws.Cells(summaryRow, 9).Value = tickerSymbol
+                ws.Cells(summaryRow, 10).Value = yearlyChange
+                ws.Cells(summaryRow, 11).Value = percentageChange
+                ws.Cells(summaryRow, 12).Value = totalVolume
+                
+                ' Update the greatest increase, decrease, and volume
+                If percentageChange > greatestIncrease Then
+                    greatestIncrease = percentageChange
+                    greatestIncreaseTicker = tickerSymbol
+                End If
+                If percentageChange < greatestDecrease Then
+                    greatestDecrease = percentageChange
+                    greatestDecreaseTicker = tickerSymbol
+                End If
+                If totalVolume > greatestVolume Then
+                    greatestVolume = totalVolume
+                    greatestVolumeTicker = tickerSymbol
+                End If
+                
+                ' Move to the next row in the summary table
+                summaryRow = summaryRow + 1
+            End If
+            
+            ' Assign the ticker symbol
+            tickerSymbol = ws.Cells(i, 1).Value
+            
+            ' Assign the opening price
+            openingPrice = ws.Cells(i, 3).Value
+            
+            ' Reset total volume
+            totalVolume = 0
+            
+            ' Reset isFirstStock flag
+            isFirstStock = False
+        End If
+        
+        ' Add the stock volume to the total
+        totalVolume = totalVolume + ws.Cells(i, 7).Value
+        
+        ' Check if it's the last occurrence of a ticker symbol
+        If ws.Cells(i, 1).Value <> ws.Cells(i + 1, 1).Value Then
+            ' Assign the closing price
+            closingPrice = ws.Cells(i, 6).Value
+            
+            ' Calculate yearly change
+            yearlyChange = closingPrice - openingPrice
+            
+            ' Check for divide by zero error when openingPrice is zero
+            If openingPrice <> 0 Then
+                ' Calculate percentage change
+                percentageChange = (yearlyChange / openingPrice) * 100
+            Else
+                ' If openingPrice is zero, percentageChange is zero
+                percentageChange = 0
+            End If
+        End If
+    Next i
+    
+    ' Output the results for the last stock
+    ws.Cells(summaryRow, 9).Value = tickerSymbol
+    ws.Cells(summaryRow, 10).Value = yearlyChange
+    ws.Cells(summaryRow, 11).Value = percentageChange
+    ws.Cells(summaryRow, 12).Value = totalVolume
+    
+    ' Update the greatest increase, decrease, and volume for the last stock
+    If percentageChange > greatestIncrease Then
+        greatestIncrease = percentageChange
+        greatestIncreaseTicker = tickerSymbol
+    End If
+    If percentageChange < greatestDecrease Then
+        greatestDecrease = percentageChange
+        greatestDecreaseTicker = tickerSymbol
+    End If
+    If totalVolume > greatestVolume Then
+        greatestVolume = totalVolume
+        greatestVolumeTicker = tickerSymbol
+    End If
+    
+    ' Output the results for the greatest increase, decrease, and volume
+    ws.Cells(2, 15).Value = "Greatest % Increase"
+    ws.Cells(2, 16).Value = greatestIncreaseTicker
+    ws.Cells(2, 17).Value = greatestIncrease
+    ws.Cells(3, 15).Value = "Greatest % Decrease"
+    ws.Cells(3, 16).Value = greatestDecreaseTicker
+    ws.Cells(3, 17).Value = greatestDecrease
+    ws.Cells(4, 15).Value = "Greatest Total Volume"
+    ws.Cells(4, 16).Value = greatestVolumeTicker
+    ws.Cells(4, 17).Value = greatestVolume
+End Sub
+
